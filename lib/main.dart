@@ -116,7 +116,9 @@ class _WidgetHomeState extends State<WidgetHome> {
     final url = Uri.parse(
         'https://api.aladhan.com/v1/timingsByCity?city=$_city&country=$_country&method=13');
     try {
-      final response = await http.get(url);
+      // 10 saniye içinde cevap gelmezse beklemeyi bırakır (bilgisayar ilk açıldığında donmaması için)
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
+      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
@@ -126,7 +128,13 @@ class _WidgetHomeState extends State<WidgetHome> {
         _calculateNextPrayer();
       }
     } catch (e) {
-      debugPrint("API Hatası: $e");
+      debugPrint("API veya İnternet Hatası: $e");
+      // Eğer internet yoksa ve hata verirse 10 saniye sonra tekrar dener
+      Future.delayed(const Duration(seconds: 10), () {
+        if (mounted) {
+          _fetchPrayerTimes();
+        }
+      });
     }
   }
 
@@ -174,9 +182,9 @@ class _WidgetHomeState extends State<WidgetHome> {
 
     setState(() {
       if (hours > 0) {
-        _nextPrayerText = "$trName vaktine $hours saat $minutes dakika kaldı";
+        _nextPrayerText = "$trName vaktine $hours saat $minutes dk kaldı";
       } else {
-        _nextPrayerText = "$trName vaktine $minutes dakika kaldı";
+        _nextPrayerText = "$trName vaktine $minutes dk kaldı";
       }
     });
   }
@@ -243,16 +251,22 @@ class _WidgetHomeState extends State<WidgetHome> {
                 child: Divider(color: Colors.white24, thickness: 1),
               ),
 
-              // --- Sonraki Namaz Vakti Sayacı ---
+              // --- Sonraki Namaz Vakti Sayacı (Taşma Korumalı) ---
               Center(
-                child: Text(
-                  _nextPrayerText,
-                  style: GoogleFonts.montserrat(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 15,
-                    color: Colors.white70,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      _nextPrayerText,
+                      style: GoogleFonts.montserrat(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 15,
+                        color: Colors.amberAccent,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
               const SizedBox(height: 20),
