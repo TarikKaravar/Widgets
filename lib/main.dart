@@ -262,7 +262,7 @@ class _WidgetHomeState extends State<WidgetHome> {
                       style: GoogleFonts.montserrat(
                         fontWeight: FontWeight.w500,
                         fontSize: 15,
-                        color: Colors.amberAccent,
+                        color: Colors.white70,
                       ),
                       textAlign: TextAlign.center,
                     ),
